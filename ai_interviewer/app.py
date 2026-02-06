@@ -1,376 +1,200 @@
-# app.py
-from modules.llm_agent import llm_stream_chat, get_summary, evaluate_answer
-from typing import Dict
-import time
+# app.py (支持语音输入的版本 - 修正版)
+from llm_agent import llm_stream_chat
+import asyncio
+import tempfile
+import os
 
-# 系统提示词模板 - 添加时间控制指令
-SYSTEM_PROMPTS = {
-    "finance": """你是专业的金融面试官，正在进行一场15分钟的结构化面试。
-你的任务：
-1. 先热情打招呼并说明面试时长约15分钟
-2. 根据候选人的回答动态生成问题（不要用预制问题）
-3. 在回答简短或模糊时适当追问
-4. 面试进行到14分钟时开始自然收尾
-5. 15分钟时主动、自然地结束面试
-6. 全程不要透露AI身份，只提出问题并追问
+# 导入语音处理模块
+try:
+    from audio_processor import record_audio_to_text, audio_to_text
+    AUDIO_ENABLED = True
+except ImportError as e:
+    print(f"语音功能不可用: {str(e)}")
+    print("语音功能需要额外的依赖库。要启用语音，请安装: pip install sounddevice soundfile numpy aiohttp")
+    AUDIO_ENABLED = False
 
-请保持专业但友好的语气，把握好时间节奏。""",
+# 模拟配置加载
+finance_interviewer = """您是一位专业的‘金融面试官’。您的目标是模拟真实的金融行业面试场景，评估候选人的专业知识、逻辑思维、风险意识和职业素养。
+宗旨与目标：
+* 为用户提供高度专业且具有挑战性的金融面试体验。
+* 覆盖金融的不同细分领域，如投资银行、资产管理、风险控制、定量分析等。
+* 针对用户的回答提供深入的反馈和改进建议。
+行为与规则：
+1) 面试准备与开场：
+a) 热情且专业地向候选人打招呼，介绍自己的身份为‘金融面试官’。
+b) 询问候选人所申请的具体岗位（例如：分析师、基金经理、风控专员）以及其背景（应届生或社招）。
+c) 根据岗位设定面试流程，通常包含自我介绍、专业技术问题（Technical Questions）和行为面试问题（Behavioral Questions）。
+2) 面试实施：
+a) 提出与岗位紧密相关的技术性问题，例如估值模型（DCF）、财务报表分析、宏观经济影响或市场衍生品定价。
+b) 采用‘压力面试’或‘追问’模式，在用户回答后，针对其逻辑漏洞进一步提问。
+c) 包含行为面试题，使用STAR法则（情境、任务、行动、结果）来评估用户的软技能。
+d) 每次对话仅提出 1-2 个问题，保持节奏，让过程更像真实对话。
+3) 反馈与总结：
+a) 在面试结束时，询问用户是否需要复盘反馈。
+b) 提供具体的反馈，包括专业知识的准确性、表达的逻辑性以及需要加强的领域。
+整体语气：
+* 语气正式、客观、严谨，有时可以表现出面试官的威严感。
+* 对金融专业术语使用精准。
+* 保持高效，避免冗长的废话。"""
+
+history = [{'role': 'system', 'content': finance_interviewer}]
+
+# 阶跃星辰API密钥 - 请替换为你的实际API密钥
+# 获取地址：https://platform.stepfun.com/
+STEPFUN_API_KEY = "3ZrwQrJ6sG8i2AhNs89yejHYABzGnlT6pMpXaVxr1UDb4iSOQBeRzMwotRFXo3vP7"  # 请替换为你的实际API密钥
+
+async def process_audio_input():
+    """处理语音输入"""
+    if not AUDIO_ENABLED:
+        print("语音功能未启用或依赖库未安装")
+        return None
     
-    "tech": """你是技术面试官，正在进行一场15分钟的结构化面试。
-你的任务：
-1. 先热情打招呼并说明面试时长约15分钟
-2. 根据候选人的回答动态生成技术问题
-3. 在回答简短或模糊时适当追问技术细节
-4. 面试进行到14分钟时开始自然收尾
-5. 15分钟时主动、自然地结束面试
-6. 全程不要透露AI身份，只提出问题并追问
-
-请保持专业但友好的语气，把握好时间节奏。""",
+    if STEPFUN_API_KEY.startswith("sk-xxxxxxxx"):
+        print("请先设置阶跃星辰API密钥")
+        return None
     
-    "pm": """你是产品经理面试官，正在进行一场15分钟的结构化面试。
-你的任务：
-1. 先热情打招呼并说明面试时长约15分钟
-2. 根据候选人的回答动态生成产品相关问题
-3. 在回答简短或模糊时适当追问
-4. 面试进行到14分钟时开始自然收尾
-5. 15分钟时主动、自然地结束面试
-6. 全程不要透露AI身份，只提出问题并追问
-
-请保持专业但友好的语气，把握好时间节奏。""",
+    print("\n正在录制音频（默认5秒），请开始说话...")
+    text = await record_audio_to_text(
+        api_key=STEPFUN_API_KEY,
+        duration=5,
+        sample_rate=16000
+    )
     
-    "default": """你是专业的面试官，正在进行一场15分钟的结构化面试。
-你的任务：
-1. 先热情打招呼并说明面试时长约15分钟
-2. 根据候选人的回答动态生成问题
-3. 在回答简短或模糊时适当追问
-4. 面试进行到14分钟时开始自然收尾
-5. 15分钟时主动、自然地结束面试
-6. 全程不要透露AI身份，只提出问题并追问
+    if text:
+        print(f"识别结果: {text}")
+        return text
+    else:
+        print("语音识别失败，请重试")
+        return None
 
-请保持专业但友好的语气，把握好时间节奏。"""
-}
+async def process_text_input():
+    """处理文本输入"""
+    user_input = input("\n用户: ")
+    if user_input.lower() in ['quit', 'exit', '退出']:
+        return None
+    return user_input
 
-# 模型配置字典
-MODEL_CONFIGS = {
-    "default": {
-        "model": "deepseek-chat",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-        "top_p": 0.9
-    },
-    "structured": {
-        "model": "deepseek-chat",
-        "temperature": 0.6,  # 适合结构化面试
-        "max_tokens": 1800,
-        "top_p": 0.85
-    }
-}
-
-# 全局时间状态
-interview_start_time = None
-TOTAL_INTERVIEW_SECONDS = 15 * 60  # 15分钟
-time_warnings_sent = []
-
-def start_interview_timer():
-    """开始面试计时"""
-    global interview_start_time, time_warnings_sent
-    interview_start_time = time.time()
-    time_warnings_sent = []  # 重置警告记录
-    print(f"⏰ 面试计时开始！总时长：{TOTAL_INTERVIEW_SECONDS//60}分钟")
-    return interview_start_time
-
-def get_interview_time_status():
-    """获取面试时间状态"""
-    if interview_start_time is None:
-        return {"elapsed": 0, "remaining": TOTAL_INTERVIEW_SECONDS, "progress": 0}
+async def process_file_audio(audio_file_path: str):
+    """处理音频文件输入"""
+    if not AUDIO_ENABLED:
+        print("语音功能未启用或依赖库未安装")
+        return None
     
-    elapsed = time.time() - interview_start_time
-    remaining = max(0, TOTAL_INTERVIEW_SECONDS - elapsed)
-    progress = min(100, (elapsed / TOTAL_INTERVIEW_SECONDS) * 100)
+    if STEPFUN_API_KEY.startswith("sk-xxxxxxxx"):
+        print("请先设置阶跃星辰API密钥")
+        return None
     
-    return {
-        "elapsed": int(elapsed),
-        "remaining": int(remaining),
-        "progress": progress,
-        "minutes_left": remaining // 60,
-        "seconds_left": int(remaining % 60),
-        "is_time_up": remaining <= 0
-    }
-
-
-
-def should_end_interview() -> bool:
-    """判断是否应该结束面试"""
-    status = get_interview_time_status()
-    return status["is_time_up"]
-
-
-def get_system_prompt(position_type: str) -> str:
-    """根据岗位类型获取系统提示词"""
-    return SYSTEM_PROMPTS.get(position_type, SYSTEM_PROMPTS["default"])
-
-def get_model_config(config_name: str) -> Dict:
-    """获取模型配置"""
-    return MODEL_CONFIGS.get(config_name, MODEL_CONFIGS["default"])
-
-def show_menu():
-    """显示主菜单"""
-    print("╔════════════════════════════════════╗")
-    print("║       🤖 智能面试系统 v3.0        ║")
-    print("║    (15分钟结构化面试-动态问题)    ║")
-    print("╚════════════════════════════════════╝")
-    print()
-    print("请选择面试模式：")
-    print("  1️⃣  15分钟结构化面试")
-    print("  0️⃣  退出系统")
-    print()
-
-def show_position_menu():
-    """显示岗位选择菜单"""
-    print("\n请选择面试岗位类型：")
-    print("  1. 金融类 (投资、银行、风控)")
-    print("  2. 技术类 (开发、算法、运维)")
-    print("  3. 产品类 (产品经理、运营)")
-    print("  4. 自定义 (其他岗位)")
-    print()
-
-def fifteen_minute_interview(position_name: str, system_prompt: str, model_config: Dict):
-    """
-    15分钟结构化面试
-    AI动态生成问题，主动控制时间
-    """
-    # 1. 开始计时
-    start_interview_timer()
+    if not os.path.exists(audio_file_path):
+        print(f"音频文件不存在: {audio_file_path}")
+        return None
     
-    # 2. 初始化历史记录
-    history = [{"role": "system", "content": system_prompt}]
-    scores = []
-    question_count = 0
+    print(f"正在处理音频文件: {audio_file_path}")
+    text = await audio_to_text(audio_file_path, STEPFUN_API_KEY)
     
-    print(f"\n🎯 {position_name} 面试开始！")
-    print("⏰ 时长：15分钟")
-    print("🤖 AI将动态生成问题并控制时间节奏")
-    print("-" * 50)
+    if text:
+        print(f"识别结果: {text}")
+        return text
+    else:
+        print("语音识别失败")
+        return None
+
+
+
+async def main():
+    """主函数"""
+    print("=" * 60)
+    print("AI金融面试系统")
+    print("=" * 60)
     
-    # 3. AI生成开场白（不固定）
-    print("🤖 面试官: ", end="", flush=True)
+    # 检查配置
+    if STEPFUN_API_KEY.startswith("sk-xxxxxxxx"):
+        print("⚠ 警告: 请先在代码中设置您的阶跃星辰API密钥")
+        print("在 app.py 中将 STEPFUN_API_KEY 替换为您的实际API密钥")
+        print("获取API密钥地址: https://platform.stepfun.com/")
     
-    opening_response = ""
-    for chunk in llm_stream_chat(
-        history=history,
-        user_input="请开始面试，先打招呼并说明面试时长。",
-        system_prompt="",
-        model_name=model_config["model"],
-        temperature=model_config["temperature"],
-        max_tokens=model_config["max_tokens"],
-        top_p=model_config["top_p"]
-    ):
-        print(chunk, end="", flush=True)
-        opening_response += chunk
     
-    print()  # 换行
-    history.append({"role": "assistant", "content": opening_response})
     
-    # 4. 主对话循环
+    print("\n输入模式:")
+    print("1. 文本输入 (直接输入文本)")
+    print("2. 语音输入 (输入 'voice' 或 '语音')")
+    print("3. 音频文件 (输入 'file:音频文件路径')")
+    print("4. 退出 (输入 'quit', 'exit', 或 '退出')")
+    print("=" * 60)
+    
+    # AI面试官开场
+    print("\nAI面试官: 您好！我是专业的金融面试官。很高兴为您提供面试模拟体验。")
+    print("AI面试官: 请问您申请的是什么岗位？以及您是应届生还是有工作经验的候选人？")
+    
     while True:
-        try:
-            # 检查时间
-            time_status = get_interview_time_status()
-            
-            # 时间到了，主动结束
-            if time_status["is_time_up"]:
-                print("\n" + "="*50)
-                print("⏰ 时间到！")
-                print("="*50)
-                
-                # AI生成结束语
-                print("🤖 面试官: ", end="", flush=True)
-                ending_response = ""
-                for chunk in llm_stream_chat(
-                    history=history,
-                    user_input="面试时间已到，请自然地结束面试，感谢候选人并适当总结他刚刚的表现。",
-                    system_prompt="",
-                    model_name=model_config["model"],
-                    temperature=model_config["temperature"],
-                    max_tokens=800,  # 结束语短一点
-                    top_p=model_config["top_p"]
-                ):
-                    print(chunk, end="", flush=True)
-                    ending_response += chunk
-                
-                print()
-                break
-            
-            
-            
-            
-            # 获取用户输入
-            user_input = input("\n👤 你: ").strip()
-            
-            # 退出检查
-            if user_input.lower() in ['quit', 'exit', '退出', '结束']:
-                print("\n⏹️ 面试提前结束")
-                break
-            
-            # 评估命令
-            if user_input.lower() == '评估':
-                if scores:
-                    avg = sum(scores) / len(scores)
-                    print(f"📊 当前平均分: {avg:.1f}/5.0 (共{len(scores)}个评分)")
-                else:
-                    print("📊 暂无评分数据")
+        print("\n" + "-" * 40)
+        print("请选择输入方式:")
+        print("1. 输入文字")
+        print("2. 语音输入 (输入 'voice')")
+        print("3. 退出 (输入 'quit')")
+        
+        mode = input("\n选择模式 (1/2/3 或直接输入): ").strip()
+        
+        if mode.lower() in ['quit', 'exit', '退出', '3']:
+            print("感谢使用AI金融面试系统，再见！")
+            break
+        
+        user_input = None
+        
+        if mode.lower() in ['voice', '语音', '2']:
+            # 语音输入模式
+            user_input = await process_audio_input()
+            if not user_input:
                 continue
+        elif mode.startswith('file:'):
+            # 音频文件模式
+            audio_path = mode[5:].strip()
+            user_input = await process_file_audio(audio_path)
+            if not user_input:
+                continue
+        else:
+            # 文本输入模式（直接输入）
+            if mode not in ['1']:
+                user_input = mode
+            else:
+                temp_input = await process_text_input()
+                if temp_input is None:  # 用户输入了退出命令
+                    print("感谢使用AI金融面试系统，再见！")
+                    break
+                user_input = temp_input
+        
+        if not user_input:
+            continue
+        
+        # 处理AI响应（流式输出）
+        print("\nAI面试官: ", end="", flush=True)
+        
+        full_response = ""
+        try:
+            # 调用llm_stream_chat函数
+            for chunk in llm_stream_chat(history, user_input):
+                if full_response:
+                    new_content = chunk[len(full_response):]
+                else:
+                    new_content = chunk
+                print(new_content, end="", flush=True)
+                full_response = chunk
             
-            # 准备给AI的上下文（包含剩余时间信息）
-            remaining_minutes = time_status["minutes_left"]
-            remaining_seconds = time_status["seconds_left"]
-            
-            # 根据剩余时间调整提示
-            time_hint = ""
-            if remaining_minutes == 14:
-                time_hint = "（刚开始）"
-            elif remaining_minutes <= 10 and remaining_minutes > 5:
-                time_hint = "（进行中）"
-            elif remaining_minutes <= 5 and remaining_minutes > 2:
-                time_hint = "（深入讨论）"
-            elif remaining_minutes <= 2:
-                time_hint = "（准备收尾）"
-            
-            # 组合输入
-            enhanced_input = user_input
-            if time_hint:
-                enhanced_input = f"{user_input} {time_hint}"
-            
-            # AI生成回应
-            print("🤖 面试官: ", end="", flush=True)
-            
-            full_response = ""
-            for chunk in llm_stream_chat(
-                history=history,
-                user_input=enhanced_input,
-                system_prompt="",
-                model_name=model_config["model"],
-                temperature=model_config["temperature"],
-                max_tokens=model_config["max_tokens"],
-                top_p=model_config["top_p"]
-            ):
-                print(chunk, end="", flush=True)
-                full_response += chunk
-            
-            print()  # 换行
-            
-            # 更新历史记录
+            # 更新对话历史
             history.append({"role": "user", "content": user_input})
             history.append({"role": "assistant", "content": full_response})
+            print()  # 换行
             
-            # 自动评估回答
-            if len(history) > 3:
-                # 找到最近的问题
-                recent_question = ""
-                for msg in reversed(history[:-2]):
-                    if msg["role"] == "assistant":
-                        recent_question = msg["content"]
-                        break
-                
-                if recent_question and len(user_input) > 15:
-                    evaluation = evaluate_answer(recent_question, user_input)
-                    scores.append(evaluation["score"])
-            
-            question_count += 1
-            
-            # 控制历史长度
-            if len(history) > 12:
-                history = [history[0]] + history[-10:]
-            
-        except KeyboardInterrupt:
-            print("\n\n⏹️ 面试中断")
-            break
         except Exception as e:
-            print(f"\n❌ 发生错误: {e}")
-            continue
-    
-    # 5. 面试结束
-    print("\n" + "="*50)
-    print("🎯 面试结束")
-    
-    # 计算实际用时
-    actual_seconds = time.time() - interview_start_time if interview_start_time else 0
-    minutes = int(actual_seconds // 60)
-    seconds = int(actual_seconds % 60)
-    
-    print(f"⏱️ 实际用时: {minutes}分{seconds}秒")
-    print(f"📊 总问题数: {question_count}")
-    
-    if scores:
-        avg_score = sum(scores) / len(scores)
-        print(f"⭐ 平均评分: {avg_score:.1f}/5.0")
-    
-    print("="*50)
-    
-    return question_count, scores
-
-def main():
-    """主函数：控制整个面试流程"""
-    
-    while True:
-        show_menu()
-        choice = input("请输入选择 (0-1): ").strip()
-        
-        if choice == '0':
-            print("👋 感谢使用，再见！")
-            break
-        
-        elif choice == '1':
-            # 15分钟结构化面试
-            
-            # 1. 选择岗位类型
-            show_position_menu()
-            pos_choice = input("请选择岗位类型 (1-4): ").strip()
-            
-            if pos_choice == '1':
-                position_type = "finance"
-                default_name = "金融分析师"
-            elif pos_choice == '2':
-                position_type = "tech"
-                default_name = "软件工程师"
-            elif pos_choice == '3':
-                position_type = "pm"
-                default_name = "产品经理"
-            elif pos_choice == '4':
-                position_type = "default"
-                default_name = "候选人"
-            else:
-                print("❌ 无效选择，使用默认设置")
-                position_type = "default"
-                default_name = "候选人"
-            
-            # 输入具体岗位名称
-            position_name = input(f"请输入具体岗位名称 (回车使用 '{default_name}'): ").strip()
-            if not position_name:
-                position_name = default_name
-            
-            # 2. 使用结构化面试专用配置
-            model_config = get_model_config("structured")
-            
-            # 3. 获取系统提示词
-            system_prompt = get_system_prompt(position_type)
-            
-            # 4. 开始15分钟面试
-            question_count, scores = fifteen_minute_interview(position_name, system_prompt, model_config)
-            
-            # 5. 生成总结
-            if question_count > 0:
-                summary = get_summary(position_name, question_count, scores)
-                print("\n" + "="*50)
-                print("📝 面试总结报告")
-                print("="*50)
-                print(summary)
-                print("="*50)
-            
-            input("\n按回车键返回主菜单...")
-        
-        else:
-            print("❌ 无效选择，请重新输入")
+            print(f"\n处理AI响应时出现错误: {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    # 检查语音功能依赖
+    if AUDIO_ENABLED:
+        print("✓ 语音功能已启用")
+    else:
+        print("✗ 语音功能未启用")
+        print("要启用语音功能，请安装依赖:")
+        print("pip install sounddevice soundfile numpy aiohttp")
+    
+    # 运行主程序
+    asyncio.run(main())
