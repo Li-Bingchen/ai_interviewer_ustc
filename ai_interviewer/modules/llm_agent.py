@@ -5,7 +5,7 @@ from openai import OpenAI
 
 client = OpenAI(
     # 若没有配置环境变量，请用百炼API Key将下行替换为：api_key="sk-xxx"
-    api_key="sk-7040bb4394684465b0f62f3063dbe9cc",
+    api_key="sk-97cc56de88184ad1913987c3005a8c93",
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
 )
 
