@@ -1,0 +1,35 @@
+{"question": "OSI 参考模型的层级有哪些？", "answer": "物理层;数据链路层;网络层;传输层;会话层;表示层;应用层。", "topic": "network", "difficulty": "easy"}
+{"question": "什么是局域网（LAN）？", "answer": "在有限地理范围内（如办公室/校园）连接设备的网络，常用以太网或 Wi-Fi。", "topic": "network", "difficulty": "easy"}
+{"question": "什么是路由器？", "answer": "连接不同网络并基于路由表转发 IP 数据包的设备，工作在网络层。", "topic": "network", "difficulty": "easy"}
+{"question": "什么是子网掩码？", "answer": "与 IP 地址按位与，划分网络号与主机号；IPv4 常见 255.255.255.0 等。", "topic": "network", "difficulty": "easy"}
+{"question": "网络层的作用是什么？", "answer": "负责选路与转发，实现端到端包传递，典型设备为路由器。", "topic": "network", "difficulty": "easy"}
+{"question": "星形拓扑的特点？", "answer": "中心节点与各端点直连，易管理与故障定位；中心单点故障风险，成本受限于中心设备。", "topic": "network", "difficulty": "easy"}
+{"question": "TCP 与 UDP 的主要区别？", "answer": "TCP 面向连接、可靠、有序、拥塞/流控；UDP 无连接、不保证可靠，时延低开销小。", "topic": "network", "difficulty": "easy"}
+{"question": "什么是 DNS？", "answer": "域名系统，将域名解析为 IP；分布式树状命名体系，应用层协议。", "topic": "network", "difficulty": "easy"}
+{"question": "什么是 MAC 地址？", "answer": "网卡硬件地址，链路层标识，通常 48 位，全局唯一，用于同一链路内转发。", "topic": "network", "difficulty": "easy"}
+{"question": "HTTP 与 HTTPS 的区别？", "answer": "HTTPS = HTTP+TLS，加密、认证、完整性；端口 443 vs 80；需证书，安全性更高。", "topic": "network", "difficulty": "easy"}
+{"question": "什么是 DHCP？", "answer": "动态主机配置协议，自动分配 IP/网关/DNS，租约管理，减少手工配置。", "topic": "network", "difficulty": "easy"}
+{"question": "TCP 三次握手过程？", "answer": "SYN -> SYN/ACK -> ACK，同步序列号并确认收发能力，建立连接。", "topic": "network", "difficulty": "medium"}
+{"question": "TCP 拥塞控制的四个阶段？", "answer": "慢启动、拥塞避免、快重传、快恢复；通过 cwnd 与 ssthresh 调节发送速率。", "topic": "network", "difficulty": "medium"}
+{"question": "BGP 如何防止 AS 间环路？", "answer": "使用 AS-PATH 属性，若发现自身 AS 号则拒收该路由。", "topic": "network", "difficulty": "medium"}
+{"question": "OSPF 邻接建立与 LSA 泛洪流程？", "answer": "Hello 发现邻居，2-Way 确认，ExStart/Exchange 同步，LSR/LSU 更新，Full 完全同步。", "topic": "network", "difficulty": "medium"}
+{"question": "HTTP/1.1、HTTP/2、HTTP/3 传输效率差异？", "answer": "HTTP/2 多路复用+HPACK；HTTP/3 基于 QUIC(UDP) 解决 TCP 队头阻塞，0-RTT 连接。", "topic": "network", "difficulty": "medium"}
+{"question": "STP 如何确定根桥与阻塞端口？", "answer": "比较桥 ID 选根桥，算根路径开销，选指定端口，其余非最优端口置 Blocking。", "topic": "network", "difficulty": "medium"}
+{"question": "MTU 与 MSS 是什么？超 MTU 如何处理？", "answer": "MTU 最大帧长，MSS 最大 TCP 负载；超 MTU 时 IP 分片，重组用标志位与偏移。", "topic": "network", "difficulty": "medium"}
+{"question": "TLS 1.3 相比 1.2 的优化？", "answer": "默认前向安全(ECDHE)，1-RTT 握手，支持 0-RTT，套件精简且全程加密握手元数据。", "topic": "network", "difficulty": "medium"}
+{"question": "NAT 穿越中 STUN 与 TURN 的作用？", "answer": "STUN 获取公网映射；TURN 在对称 NAT 时中继流量；ICE 协调多种路径择优。", "topic": "network", "difficulty": "medium"}
+{"question": "SDN 的主要平面与架构？", "answer": "控制平面与数据平面分离；集中控制器下发流表；南向如 OpenFlow，北向 API。", "topic": "network", "difficulty": "medium"}
+{"question": "什么是 Anycast？", "answer": "多节点共享同一 IP，路由选择最近开销的节点；用于 DNS 根、CDN。", "topic": "network", "difficulty": "medium"}
+{"question": "如何防御 ARP 欺骗？", "answer": "静态 ARP 绑定、交换机 DAI、结合 DHCP Snooping 校验 IP-MAC 绑定。", "topic": "network", "difficulty": "medium"}
+{"question": "IPv6 邻居发现协议（NDP）取代了什么？", "answer": "取代 ARP 做地址解析；支持无状态地址自动配置和重复地址检测；含路由/前缀通告。", "topic": "network", "difficulty": "medium"}
+{"question": "为什么 QUIC 连接恢复更快？", "answer": "用连接 ID 支持迁移，IP/端口变更无需重握手；基于 UDP 避免 TCP 四元组绑定。", "topic": "network", "difficulty": "medium"}
+{"question": "QoS 中的 DiffServ 与 IntServ 有何区别？", "answer": "IntServ 基于 RSVP 提前预留资源，精细但不可扩展；DiffServ 基于 DSCP 分类与队列调度，简单可扩展但无严格保证。", "topic": "network", "difficulty": "hard"}
+{"question": "QUIC 如何处理队头阻塞与丢包恢复？", "answer": "独立流级别的有序/重传，基于 UDP 自行拥塞控制，丢包只影响所在流；采用基于帧的 ACK 与丢包检测。", "topic": "network", "difficulty": "hard"}
+{"question": "BGP 路由收敛慢的原因与优化手段？", "answer": "路径向量协议需传播/计算，抖动导致 flap；可用 route flap damping、减小表规模、优化定时器与增量更新。", "topic": "network", "difficulty": "hard"}
+{"question": "VXLAN 的封装开销与核心组件？", "answer": "在 UDP 上封装二层帧，额外 50B 左右；VNI 标识租户，VTEP 进行封装/解封；需控制平面分发映射。", "topic": "network", "difficulty": "hard"}
+{"question": "CDN 命中率优化手段有哪些？", "answer": "合理分片与缓存键、版本号/签名防回源、TTL 与预取、长尾内容多级缓存、就近调度与负载均衡。", "topic": "network", "difficulty": "hard"}
+{"question": "MPTCP（多路径 TCP）如何提升可靠性与吞吐？", "answer": "建立多个子流在不同路径并行传输，拥塞控制分路径，调度分片；一条路径失效仍可保持连接。", "topic": "network", "difficulty": "hard"}
+{"question": "QUIC 的拥塞控制与 TCP 有何差异？", "answer": "QUIC 在用户态实现，可快速迭代；基于包号空间和 ACK 延迟，常用 BBR/CUBIC 变体，丢包仅影响对应流。", "topic": "network", "difficulty": "hard"}
+{"question": "数据中心网络拥塞控制（如 DCTCP）的关键思路？", "answer": "利用 ECN 标记反映队列长度，发送端按标记比例线性调整窗口，降低队头阻塞与时延。", "topic": "network", "difficulty": "hard"}
+{"question": "Segment Routing (SR/SRv6) 的核心优势？", "answer": "将路径编码为段列表，无需中间节点维状态；便于流量工程、快速重路由，SRv6 基于 IPv6 扩展头。", "topic": "network", "difficulty": "hard"}
+{"question": "零信任网络的关键控制点？", "answer": "强身份与设备态感知、最小权限、细粒度策略、持续评估与加密通道；通常结合 SDP/身份网关。", "topic": "network", "difficulty": "hard"}
