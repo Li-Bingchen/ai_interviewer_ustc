@@ -12,6 +12,17 @@ STEPFUN_API_KEY = os.getenv("STEPFUN_API_KEY", "6pZ3jWJGHoMXAcZZpjF3ierYzYDqHEpQ
 # 阿里云 DashScope API (用于 LLM)
 DASHSCOPE_API_KEY ="sk-af8e9af4aae340bd86178117f7f3f33c" #os.getenv("DASHSCOPE_API_KEY", "sk-af8e9af4aae340bd86178117f7f3f33c")
 
+# ==================== 模型配置 ====================
+# LLM 模型
+LLM_MODEL = "qwen-plus"
+LLM_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+# TTS 模型
+TTS_MODEL = "step-tts-mini"
+TTS_VOICE = "cixingnansheng"  # 磁性男声
+
+# ASR 模型
+ASR_MODEL = "step-asr"
 # ==================== 路径配置 ====================
 # 项目根目录
 BASE_DIR = Path(__file__).parent
@@ -28,18 +39,6 @@ VIDEOS_DIR = OUTPUT_DIR / "videos"
 
 # 临时文件目录
 TEMP_DIR = BASE_DIR / "temp_audio"
-
-# ==================== 模型配置 ====================
-# LLM 模型
-LLM_MODEL = "qwen-plus"
-LLM_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-
-# TTS 模型
-TTS_MODEL = "step-tts-mini"
-TTS_VOICE = "cixingnansheng"  # 磁性男声
-
-# ASR 模型
-ASR_MODEL = "step-asr"
 
 # ==================== 应用配置 ====================
 # 音频采样率
