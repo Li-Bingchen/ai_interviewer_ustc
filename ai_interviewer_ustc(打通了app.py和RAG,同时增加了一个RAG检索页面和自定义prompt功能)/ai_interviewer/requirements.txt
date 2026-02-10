@@ -1,11 +1,27 @@
-# Core
-openai>=1.0.0
-aiohttp>=3.8.0
+# 核心框架
+streamlit>=1.28.0,<2.0.0
 
-# Frontend (Streamlit)
-streamlit>=1.53.0
+# OpenAI SDK (用于StepFun API调用)
+openai>=1.12.0,<2.0.0
 
-# Optional / legacy
-edge-tts
-pydub
-gradio
+# LangChain相关 (用于RAG)
+langchain>=0.1.0,<0.2.0
+langchain-chroma>=0.1.0,<0.2.0
+langchain-community>=0.0.10,<0.1.0
+
+
+# 向量数据库
+chromadb>=0.4.22,<0.5.0
+
+# 阿里云DashScope SDK
+dashscope>=1.14.0,<2.0.0
+
+# 异步HTTP请求
+aiohttp>=3.9.0,<4.0.0
+
+# 音频处理 (录音功能)
+sounddevice>=0.4.6,<0.5.0
+numpy>=1.24.0,<2.0.0
+
+# 环境变量管理
+python-dotenv>=1.0.0,<2.0.0
