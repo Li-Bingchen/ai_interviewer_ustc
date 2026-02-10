@@ -1,0 +1,35 @@
+{"question": "数组与链表的主要差异？", "answer": "数组随机访问 O(1) 但扩容/插入成本高；链表插入删除 O(1) 但随机访问 O(n)。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "栈与队列的典型应用？", "answer": "栈用于括号匹配、DFS、回溯；队列用于 BFS、消息缓冲、滑动窗口。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "双端队列有什么用？", "answer": "支持两端插入删除；可实现单调队列求滑窗极值、LRU、任务调度。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "哈希表的冲突解决方法？", "answer": "链地址法、开放定址（线性/二次/双重散列）、再哈希，需控制装载因子。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "装载因子过高带来的问题？", "answer": "冲突增多、查询/插入退化；需扩容或再哈希以维持 O(1) 期望。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "什么是跳表？", "answer": "分层有序链表，用随机索引层提升查找/插入/删除到 O(log n)，适合有序键值存储。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "LRU 与 LFU 的区别？", "answer": "LRU 按最近使用；LFU 按使用频率；可用双向链表+哈希或分层桶实现。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "堆的典型应用？", "answer": "优先队列、TopK、Dijkstra、合并 K 路有序流、调度。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "最小堆与最大堆的构建复杂度？", "answer": "heapify O(n)；插入/删除堆顶 O(log n)。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "二叉搜索树的性质？", "answer": "左<根<右；中序遍历有序；不平衡时退化为链。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "AVL 与红黑树对比？", "answer": "AVL 更平衡查找快但旋转多；红黑树插入删除更快，工程中常用。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "B 树/B+ 树的特点？", "answer": "多路平衡树，磁盘友好；B+ 叶子链表方便范围查询，非叶只存键。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "Trie 的用途？", "answer": "前缀匹配、自动补全、敏感词过滤；空间换时间。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "并查集适合解决什么问题？", "answer": "连通性判定、动态合并集合，如岛屿数量、最小生成树 Kruskal。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "并查集的路径压缩与按秩合并作用？", "answer": "降低树高，使近似 O(α(n))，几乎常数。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "线段树/树状数组适合什么场景？", "answer": "区间查询与更新（求和/最值），树状数组实现简单但功能略弱。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "Bloom Filter 的特点与限制？", "answer": "高效判存在，允许一定误判率，不支持删除（或需计数 BF），无假阴性。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "单调栈的典型题型？", "answer": "下一个更大/更小元素、直方图最大矩形、温度问题。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "单调队列解决什么问题？", "answer": "滑动窗口最大/最小值，O(n) 时间维护有序候选。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "图的存储方式及适用场景？", "answer": "邻接矩阵用于稠密图，邻接表用于稀疏图，矩阵空间 O(n^2)。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "拓扑排序的前提和应用？", "answer": "有向无环图；任务依赖调度、课程表、编译顺序。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "Dijkstra 与 BFS 的区别？", "answer": "Dijkstra 处理非负权最短路，用堆；BFS 等权最短路或层次遍历。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "Kahn 与 DFS 拓扑的差异？", "answer": "Kahn 用入度队列；DFS 用递归后序栈；都可检测环。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "稳定排序有哪些？", "answer": "归并、冒泡、插入、计数、桶、基数；快速/选择/堆排序不稳定。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "二分查找的前提条件？", "answer": "有序、可随机访问、单调性或界限性质明确；注意边界与溢出处理。", "topic": "datastructure", "difficulty": "easy"}
+{"question": "快排最坏退化原因与优化？", "answer": "已近有序时枢轴不佳退化 O(n^2)；用随机化/三数取中，小区间插入排序优化。", "topic": "datastructure", "difficulty": "medium"}
+{"question": "Treap 与 Splay 有何区别？", "answer": "Treap 维护随机优先级近似平衡，旋转代价均摊；Splay 通过伸展自适应访问热点，无严格平衡保证。", "topic": "datastructure", "difficulty": "hard"}
+{"question": "可持久化数据结构的核心思路？", "answer": "结构共享 + 只读旧版本 + 复制写 (copy-on-write)；常用于可持久化线段树/并查集。", "topic": "datastructure", "difficulty": "hard"}
+{"question": "布隆过滤器如何调节误判率？", "answer": "通过位图大小和哈希函数个数 k，k≈(m/n)ln2，误判率≈(1-e^{-kn/m})^k。", "topic": "datastructure", "difficulty": "hard"}
+{"question": "跳表在并发环境下如何保证一致性？", "answer": "可用锁分层/乐观锁或基于 CAS 的无锁实现，插入删除需维护多层前驱后继一致。", "topic": "datastructure", "difficulty": "hard"}
+{"question": "Fibonacci 堆与二项堆的差异及适用场景？", "answer": "Fibonacci 堆摊还合并与减键更快，适合 Dijkstra 等频繁减键场景；二项堆结构简单常数项小。", "topic": "datastructure", "difficulty": "hard"}
+{"question": "持久化线段树如何支持区间版本查询？", "answer": "每次更新只复制路径节点，版本根指向共享子树，查询时按版本根遍历，空间 O(log n) 增量。", "topic": "datastructure", "difficulty": "hard"}
+{"question": "Treap 的旋转期望复杂度为何是 O(log n)？", "answer": "优先级随机保证期望平衡，旋转次数与随机 BST 类似，期望树高 O(log n)。", "topic": "datastructure", "difficulty": "hard"}
+{"question": "并发哈希表如何降低锁竞争？", "answer": "分段锁/桶级锁、无锁链表/跳表、读写锁或 RCU，减少全局锁；控制装载因子与扩容策略。", "topic": "datastructure", "difficulty": "hard"}
+{"question": "基于 CRDT 的协同编辑如何合并冲突？", "answer": "用序号/标识符为元素排序，幺半群/半格保证并发操作可交换、幂等，最终强一致；常见 RGA/WOOT/LWW-Element-Set。", "topic": "datastructure", "difficulty": "hard"}

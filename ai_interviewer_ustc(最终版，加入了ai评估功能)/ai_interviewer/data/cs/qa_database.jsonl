@@ -1,0 +1,33 @@
+{"question": "ACID 分别代表什么含义？", "answer": "原子性、一致性、隔离性、持久性，保障事务要么全部成功要么全部回滚。", "topic": "database", "difficulty": "easy"}
+{"question": "什么是事务隔离级别？", "answer": "读未提交、读已提交、可重复读、可串行化，依次提高隔离降低并发。", "topic": "database", "difficulty": "easy"}
+{"question": "可重复读如何避免幻读？", "answer": "MVCC 避免不可重复读；幻读需结合间隙锁或 next-key lock 避免插入。", "topic": "database", "difficulty": "medium"}
+{"question": "MVCC 的核心思路是什么？", "answer": "多版本数据 + 事务快照 + undo/redo 日志，在读写分离时间线避免锁冲突。", "topic": "database", "difficulty": "medium"}
+{"question": "聚簇索引与二级索引区别？", "answer": "聚簇索引叶子存整行数据；二级索引叶子存主键指针，查询可能回表。", "topic": "database", "difficulty": "easy"}
+{"question": "覆盖索引的好处？", "answer": "查询所需列都在索引中，无需回表，减少 IO 和锁竞争。", "topic": "database", "difficulty": "easy"}
+{"question": "B+ 树为何适合做索引？", "answer": "有序、多路分支、磁盘友好，叶子链表便于范围查询，层数低减少 IO。", "topic": "database", "difficulty": "easy"}
+{"question": "Hash 索引的特点和限制？", "answer": "等值查询快；不支持范围；冲突需处理；变更重哈希成本高。", "topic": "database", "difficulty": "easy"}
+{"question": "什么是回表？", "answer": "通过二级索引定位主键后，再去聚簇索引取整行数据。", "topic": "database", "difficulty": "easy"}
+{"question": "JOIN 有哪些类型？", "answer": "内/左/右/全外/交叉连接；执行计划依赖索引和行数。", "topic": "database", "difficulty": "easy"}
+{"question": "索引何时失效？", "answer": "左前缀不满足、函数/运算包裹列、类型不匹配、%前缀模糊、低选择性等。", "topic": "database", "difficulty": "medium"}
+{"question": "事务死锁常见原因？", "answer": "锁顺序不一致、长事务、范围锁冲突；可通过超时或死锁检测回滚。", "topic": "database", "difficulty": "medium"}
+{"question": "数据库慢查询优化思路？", "answer": "看执行计划、补索引、减少回表、改写 SQL、分库分表或缓存、限流。", "topic": "database", "difficulty": "medium"}
+{"question": "Explain 计划关注哪些字段？", "answer": "type、key、rows、Extra；是否全表扫、是否用索引、回表、临时表、filesort。", "topic": "database", "difficulty": "medium"}
+{"question": "主从复制的基本流程？", "answer": "主库写 binlog，从库 IO 线程拉取写 relay log，SQL 线程重放应用。", "topic": "database", "difficulty": "easy"}
+{"question": "复制延迟的成因和缓解？", "answer": "从库性能差、大事务、单线程重放；缓解：拆大事务、多线程复制、优化慢 SQL。", "topic": "database", "difficulty": "medium"}
+{"question": "读写分离的风险？", "answer": "主从延迟导致读旧数据；需强一致读走主库或用 GTID/延迟监测路由。", "topic": "database", "difficulty": "medium"}
+{"question": "分库分表的拆分维度？", "answer": "垂直按业务，水平按键；需考虑热点与跨分片 JOIN。", "topic": "database", "difficulty": "medium"}
+{"question": "分片键如何选择？", "answer": "高基数、均匀、查询常用，避免热点；避免跨分片聚合与迁移成本高。", "topic": "database", "difficulty": "medium"}
+{"question": "什么是两阶段提交 (2PC)？", "answer": "协调者预提交收集投票，确认后全局提交；失败则回滚，保证分布式一致性。", "topic": "database", "difficulty": "hard"}
+{"question": "分布式事务的常见方案？", "answer": "2PC、3PC、消息最终一致、TCC、Saga；权衡一致性与可用性。", "topic": "database", "difficulty": "hard"}
+{"question": "SQL 与 NoSQL 取舍？", "answer": "SQL 强事务与结构化；NoSQL 弹性扩展弱事务；按一致性、模式、扩展性选择。", "topic": "database", "difficulty": "easy"}
+{"question": "缓存穿透/雪崩/击穿的防护？", "answer": "穿透：布隆/空值缓存；雪崩：过期分散、预热；击穿：互斥锁或单飞。", "topic": "database", "difficulty": "medium"}
+{"question": "Redis 持久化方式？", "answer": "RDB 快照、AOF 追加、混合；权衡恢复速度与数据丢失窗口。", "topic": "database", "difficulty": "easy"}
+{"question": "Redis 过期与淘汰策略？", "answer": "定期+惰性删除；淘汰 LRU/LFU/TTL/随机/全删；按内存压力触发。", "topic": "database", "difficulty": "medium"}
+{"question": "如何避免缓存与数据库双写不一致？", "answer": "写先删缓存再写库，或写库再删缓存；延迟双删；订阅 binlog 异步修正。", "topic": "database", "difficulty": "medium"}
+{"question": "NewSQL（如 TiDB）如何兼顾扩展性与一致性？", "answer": "分布式 KV+SQL 层，Percolator/2PC+多副本 Raft；全局时间戳保证快照一致性。", "topic": "database", "difficulty": "hard"}
+{"question": "如何设计高并发下的热点行更新？", "answer": "拆分热点键、引入写队列或乐观锁重试、局部缓存批量合并、限流与降级。", "topic": "database", "difficulty": "hard"}
+{"question": "数据库在线 DDL 如何兼顾可用性？", "answer": "影子表+双写/回放、在线重建索引、PT-OSC/gh-ost 分批拷贝，控制锁时间与回切方案。", "topic": "database", "difficulty": "hard"}
+{"question": "跨机房多主写入的数据冲突如何处理？", "answer": "写冲突检测（版本/向量），合并策略（LWW/CRDT/业务合并），必要时人工对账；路由同分片减冲突。", "topic": "database", "difficulty": "hard"}
+{"question": "如何在分布式数据库里实现全局二级索引？", "answer": "索引表分片存主键映射，写入需双写或两阶段，读需路由/回表；可用异步维护+版本校验降低写放大。", "topic": "database", "difficulty": "hard"}
+{"question": "OLTP/OLAP 混部的隔离与治理策略？", "answer": "读写分离或 HTAP，资源隔离（队列/配额），大查询限速/切分，冷热分层，物化视图/预计算。", "topic": "database", "difficulty": "hard"}
+{"question": "数据库一致性校验与修复如何做？", "answer": "定期校验和/行级校验，binlog 对账，采样比对，发现不一致走重放/重建索引/补写；在线低峰执行。", "topic": "database", "difficulty": "hard"}

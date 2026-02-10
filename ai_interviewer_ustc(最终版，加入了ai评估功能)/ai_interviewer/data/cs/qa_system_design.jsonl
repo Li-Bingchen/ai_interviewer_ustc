@@ -1,0 +1,34 @@
+{"question": "设计短链接服务的核心组件？", "answer": "ID 生成/哈希、存储映射、跳转重定向、访问统计、反滥用、缓存与预热。", "topic": "system-design", "difficulty": "medium"}
+{"question": "短链接如何避免碰撞和热点？", "answer": "Base62/雪花 ID 保证唯一；随机打散或分桶；热点路径做缓存与多级副本。", "topic": "system-design", "difficulty": "medium"}
+{"question": "设计高并发读的新闻 Feed？", "answer": "写扩散/读扩散按规模选；时间线存储；热门缓存；分页去重；推拉结合。", "topic": "system-design", "difficulty": "hard"}
+{"question": "Rate Limiter 的实现方式？", "answer": "令牌桶、漏桶、滑动窗口；分用户/IP/接口；分布式需状态共享与时钟漂移处理。", "topic": "system-design", "difficulty": "medium"}
+{"question": "设计全局唯一 ID 服务要点？", "answer": "高可用、单调或趋势递增、分区独立、时钟回拨处理、批量发号、号段预取。", "topic": "system-design", "difficulty": "medium"}
+{"question": "如何做搜索联想/自动补全？", "answer": "Trie/倒排存前缀，热门查询打分排序，模糊匹配限前缀长度，缓存与限流。", "topic": "system-design", "difficulty": "medium"}
+{"question": "设计对象存储/上传服务的要点？", "answer": "分片上传、断点续传、秒传、鉴权签名、防盗链、CDN、冷热分层、元数据服务。", "topic": "system-design", "difficulty": "medium"}
+{"question": "如何设计通知/消息推送系统？", "answer": "多通道（站内/邮件/短信/Push），模板变量，定时/批量，重试退避，去重追踪。", "topic": "system-design", "difficulty": "medium"}
+{"question": "设计聊天室的关键点？", "answer": "长连接/WS，房间模型，在线状态，历史存储，顺序与幂等，限流与风控。", "topic": "system-design", "difficulty": "medium"}
+{"question": "如何保证消息有序性？", "answer": "按分区键路由同会话到同分区；消费端单线程或有序队列；必要时重排。", "topic": "system-design", "difficulty": "medium"}
+{"question": "如何设计电商的库存扣减？", "answer": "预扣或乐观锁，队列串行，防超卖，补偿退款，库存与订单解耦。", "topic": "system-design", "difficulty": "medium"}
+{"question": "支付/下单接口如何做幂等？", "answer": "业务幂等键（订单号/支付单号），状态机驱动，去重表，回调签名校验。", "topic": "system-design", "difficulty": "medium"}
+{"question": "读写分离与多活架构注意点？", "answer": "读写路由、复制延迟、全局唯一键、冲突合并、故障切换一致性。", "topic": "system-design", "difficulty": "hard"}
+{"question": "如何设计缓存层？", "answer": "热点与长尾分层，TTL 策略，穿透/击穿/雪崩防护，多级缓存一致性。", "topic": "system-design", "difficulty": "medium"}
+{"question": "CDN 的关键作用？", "answer": "就近分发、缓存静态/半动态内容、减轻源站；需刷新/回源策略与防盗链。", "topic": "system-design", "difficulty": "easy"}
+{"question": "文件/媒体分发如何优化大文件下载？", "answer": "分片/Range、断点续传、CDN、预签名 URL、限速、内容哈希校验。", "topic": "system-design", "difficulty": "medium"}
+{"question": "如何设计日志与监控体系？", "answer": "结构化日志；采集/传输/存储/检索；指标+Tracing+Log；告警与降噪。", "topic": "system-design", "difficulty": "medium"}
+{"question": "蓝绿/金丝雀发布的关键控制？", "answer": "流量分配、健康探测、回滚开关、配置与数据兼容、灰度人群选择。", "topic": "system-design", "difficulty": "medium"}
+{"question": "如何设计熔断与降级？", "answer": "错误率/延迟阈值触发熔断，半开探活；降级兜底返回或关闭非核心功能。", "topic": "system-design", "difficulty": "medium"}
+{"question": "电商购物车的设计要点？", "answer": "用户/匿名态、合并逻辑、库存校验、价格时效、跨端同步、限购与促销。", "topic": "system-design", "difficulty": "easy"}
+{"question": "如何做数据库分片路由？", "answer": "根据分片键哈希/范围路由；路由表/一致性哈希；支持迁移与扩容。", "topic": "system-design", "difficulty": "medium"}
+{"question": "跨分片查询的方案？", "answer": "分片并行查询+汇总，中间层聚合；尽量避免跨分片 JOIN，必要时预计算。", "topic": "system-design", "difficulty": "hard"}
+{"question": "搜索服务的核心组件？", "answer": "分词、倒排索引、相关性排序、索引构建/更新、缓存、纠错与高亮。", "topic": "system-design", "difficulty": "medium"}
+{"question": "如何设计高可用的配置中心？", "answer": "集中存储+观察者推送、版本与灰度、回滚、权限与审计、多副本保证可用。", "topic": "system-design", "difficulty": "medium"}
+{"question": "图片处理服务的要点？", "answer": "裁剪/压缩/格式转换、水印；异步管线；CDN 缓存；原图保护与鉴权。", "topic": "system-design", "difficulty": "easy"}
+{"question": "如何设计 A/B 实验平台？", "answer": "流量分桶、随机且可复现、指标埋点与归因、实验配置管理、显著性统计。", "topic": "system-design", "difficulty": "medium"}
+{"question": "多活数据中心冲突解决有哪些策略？", "answer": "基于时间戳/版本向量的冲突检测，业务合并策略（LWW/CRDT/自定义），必要时人工对账。", "topic": "system-design", "difficulty": "hard"}
+{"question": "订单高峰场景下的削峰填谷设计？", "answer": "入口限流+排队，异步下单队列，缓存预热，热点隔离，降级兜底与告警。", "topic": "system-design", "difficulty": "hard"}
+{"question": "多区域多活下如何做配置与特性灰度一致性？", "answer": "配置中心多副本一致，灰度标签/命名空间，版本与回滚，按区域/用户分桶，状态对齐与观测。", "topic": "system-design", "difficulty": "hard"}
+{"question": "解释 CAP 定理及对系统设计的影响？", "answer": "CAP 指一致性、可用性、分区容错性，网络分区发生时只能二选一：C+P（如强一致数据库）牺牲可用性，A+P（如多数 NoSQL）牺牲强一致，实践中常选 AP+最终一致或 CP+降级；需要结合业务对延迟与一致性要求做取舍，并通过多副本、故障切换与幂等补偿降低影响。", "topic": "system-design", "difficulty": "medium"}
+{"question": "推荐/搜索的召回-排序-重排链路如何扩展？", "answer": "多路召回（向量/规则/协同），粗排+精排+重排层级，特征服务，AB 与在线学习，缓存与限流。", "topic": "system-design", "difficulty": "hard"}
+{"question": "API 网关高可用与扩展性设计？", "answer": "无状态水平扩展；配置下发与热更新；限流/熔断/降级；超时重试；健康检查与就近路由；多机房容灾。", "topic": "system-design", "difficulty": "hard"}
+{"question": "日志/指标/追踪三板斧如何统一采集与关联？", "answer": "统一 trace_id/span_id 贯穿，sidecar/agent 采集，指标聚合与标签管理，日志结构化，采样与降噪策略。", "topic": "system-design", "difficulty": "hard"}
+{"question": "实时风控系统的关键设计？", "answer": "低延迟特征服务，规则+模型双轨，特征缓存与滑窗计算，异步审计，灰度与回滚，监控与拦截闭环。", "topic": "system-design", "difficulty": "hard"}
