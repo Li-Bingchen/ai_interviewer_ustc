@@ -4,7 +4,9 @@ AI 面试官 - Streamlit 前端
 方案：专业会客厅 - 浅灰/米白背景、深灰正文、深蓝强调，卡片式对话与留白。
 """
 import asyncio
+import json
 import sys
+from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -27,6 +29,7 @@ from modules.audio_processor import (
     chunking_tool,
     transcribe_file,
 )
+from modules.ai_report import ai_report_stream, _format_history_for_report
 
 # -----------------------------------------------------------------------------
 # 1. 页面配置
@@ -156,6 +159,11 @@ if "rag_top_k" not in st.session_state:
     st.session_state.rag_top_k = 6
 if "rag_history" not in st.session_state:
     st.session_state.rag_history = []  # 存储每轮 RAG 检索记录
+# 面试报告相关状态
+if "ai_report_text" not in st.session_state:
+    st.session_state.ai_report_text = ""  # 已生成的报告内容
+if "report_generating" not in st.session_state:
+    st.session_state.report_generating = False
 
 
 # -----------------------------------------------------------------------------
@@ -252,59 +260,125 @@ with st.sidebar:
         st.session_state.audio_processed_token = None
         st.session_state.last_tts_path = None
         st.session_state.rag_history = []
+        st.session_state.ai_report_text = ""
+        st.session_state.report_generating = False
         st.rerun()
     st.markdown("---")
     st.caption("语音输入需浏览器授权麦克风；TTS 为整段播报。")
 
 
 # -----------------------------------------------------------------------------
-# 5. 主区域：Tabs — 对话 + RAG 知识
+# 5. 主区域：四个 Tab — 语音对话 / 文字对话 / RAG 知识检索 / 面试报告
 # -----------------------------------------------------------------------------
 st.title("AI 面试官")
-st.markdown("支持**语音**或**文字**输入，结合** 知识库检索（RAG） **与面试官对话。")
+st.markdown("支持**语音**或**文字**输入，结合**知识库检索（RAG）**与面试官对话。")
 
-tab_chat, tab_rag = st.tabs(["面试对话", "RAG 知识检索"])
+tab_voice, tab_chat, tab_rag, tab_report = st.tabs(
+    ["🎙️ 语音对话", "💬 文字对话", "📚 RAG 知识检索", "📊 面试报告"]
+)
 
-# ---------- Tab 1: 对话历史 ----------
+user_input = None
+
+# ---------- Tab 1: 语音对话 ----------
+with tab_voice:
+    st.markdown("#### 🎙️ 语音面试模式")
+    st.caption("录音结束后自动识别并发送，面试官回复自动语音播放")
+
+    audio_value = st.audio_input(
+        "点击麦克风开始录音", sample_rate=AUDIO_SAMPLE_RATE or 16000
+    )
+    if audio_value is not None:
+        try:
+            raw = audio_value.getvalue()
+            token = hash(raw) if raw else id(audio_value)
+        except Exception:
+            token = id(audio_value)
+        if st.session_state.audio_processed_token != token:
+            st.session_state.audio_processed_token = token
+            temp_wav = TEMP_DIR / f"{uuid4().hex}.wav"
+            temp_wav.parent.mkdir(parents=True, exist_ok=True)
+            with open(temp_wav, "wb") as f:
+                f.write(audio_value.getvalue())
+            with st.spinner("正在识别语音..."):
+                try:
+                    text = run_async(
+                        transcribe_file(str(temp_wav), STEPFUN_API_KEY)
+                    )
+                    if text and text.strip():
+                        user_input = text.strip()
+                    else:
+                        st.warning("未识别到有效内容，请重试。")
+                except Exception as e:
+                    st.error(f"语音识别失败: {e}")
+                finally:
+                    try:
+                        temp_wav.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+    else:
+        st.session_state.audio_processed_token = None
+
+    st.markdown("---")
+
+    # 展示最近几轮对话，保持语音 Tab 简洁
+    recent = st.session_state.history[-4:] if st.session_state.history else []
+    if recent:
+        st.markdown("**最近对话**")
+        for msg in recent:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            css_class = "chat-card-user" if role == "user" else "chat-card-assistant"
+            st.markdown(
+                f'<div class="{css_class}"><p>{content}</p></div>',
+                unsafe_allow_html=True,
+            )
+    else:
+        st.info("点击上方麦克风开始语音面试")
+
+    # TTS 自动播放（autoplay=True 无需手动点击播放按钮）
+    last_tts = st.session_state.get("last_tts_path")
+    if last_tts and Path(last_tts).exists():
+        st.audio(last_tts, format="audio/mp3", autoplay=True)
+
+# ---------- Tab 2: 文字对话 ----------
 with tab_chat:
+    # 完整聊天历史
     chat_container = st.container()
     with chat_container:
+        if not st.session_state.history:
+            st.info("暂无聊天记录，在下方输入文字开始对话。")
         for msg in st.session_state.history:
             role = msg.get("role", "user")
             content = msg.get("content", "")
-            if role == "user":
-                st.markdown(
-                    f'<div class="chat-card-user"><p>{content}</p></div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f'<div class="chat-card-assistant"><p>{content}</p></div>',
-                    unsafe_allow_html=True,
-                )
+            css_class = "chat-card-user" if role == "user" else "chat-card-assistant"
+            st.markdown(
+                f'<div class="{css_class}"><p>{content}</p></div>',
+                unsafe_allow_html=True,
+            )
 
-    # 若有当前轮 TTS 音频路径，在对话区下方展示播放器（rerun 后仍可播放）
-    last_tts_path = st.session_state.get("last_tts_path")
-    if last_tts_path and Path(last_tts_path).exists():
-        st.audio(last_tts_path, format="audio/mp3")
+    # 文字输入表单（嵌入 Tab 内部）
+    with st.form("chat_form", clear_on_submit=True):
+        chat_text = st.text_input(
+            "输入消息", placeholder="输入文字与面试官对话...", label_visibility="collapsed"
+        )
+        send_btn = st.form_submit_button("发送", use_container_width=True)
+    if send_btn and chat_text and chat_text.strip():
+        user_input = chat_text.strip()
 
-# ---------- Tab 2: RAG 知识检索记录 ----------
+# ---------- Tab 3: RAG 知识检索记录 ----------
 with tab_rag:
     if not st.session_state.rag_history:
         st.info("暂无检索记录。开启 RAG 并发送消息后，检索到的知识片段会在此展示。")
     else:
         st.markdown(f"共 **{len(st.session_state.rag_history)}** 条检索记录")
-        # 倒序展示：最新的在前
         for idx, item in enumerate(reversed(st.session_state.rag_history), 1):
             query = item.get("query", "")
             content = item.get("retrieved", "")
             domain = item.get("domain", "")
             top_k = item.get("top_k", "")
-            # 截取片段做简短预览
             snippets = [s.strip() for s in content.split("\n") if s.strip()]
             preview_html = ""
             for i, snippet in enumerate(snippets, 1):
-                # 限制每条片段最长 300 字符
                 display = snippet[:300] + ("..." if len(snippet) > 300 else "")
                 preview_html += f"<div style='margin-bottom:4px'><b>片段 {i}:</b> {display}</div>"
             st.markdown(
@@ -315,56 +389,120 @@ with tab_rag:
                 </div>""",
                 unsafe_allow_html=True,
             )
-            # 提供展开查看完整内容
             with st.expander(f"查看完整检索内容 #{idx}", expanded=False):
                 st.text(content)
 
-# -----------------------------------------------------------------------------
-# 6. 输入区：语音 + 文字，并执行 LLM + 可选 TTS
-# -----------------------------------------------------------------------------
-user_input = None
+# ---------- Tab 4: 面试报告 ----------
+with tab_report:
+    st.markdown("#### 📊 面试报告")
+    st.caption("结束面试后，可下载对话记录或生成 AI 评价报告")
 
-# 文字输入
-chat_msg = st.chat_input("输入文字发送...")
-if chat_msg and chat_msg.strip():
-    user_input = chat_msg.strip()
+    _history = st.session_state.history
+    _msg_count = len(_history)
+    _user_count = sum(1 for m in _history if m.get("role") == "user")
+    _asst_count = sum(1 for m in _history if m.get("role") == "assistant")
 
-# 语音输入（st.audio_input 返回 UploadedFile 或 None）
-audio_value = st.audio_input("或点击麦克风录音", sample_rate=AUDIO_SAMPLE_RATE or 16000)
-if audio_value is not None:
-    # 避免同一段录音被重复处理：用唯一 token 标记当前录音
-    try:
-        raw = audio_value.getvalue()
-        token = hash(raw) if raw else id(audio_value)
-    except Exception:
-        token = id(audio_value)
-    if st.session_state.audio_processed_token != token:
-        st.session_state.audio_processed_token = token
-        temp_wav = TEMP_DIR / f"{uuid4().hex}.wav"
-        temp_wav.parent.mkdir(parents=True, exist_ok=True)
-        with open(temp_wav, "wb") as f:
-            f.write(audio_value.getvalue())
-        with st.spinner("正在识别语音..."):
-            try:
-                text = run_async(transcribe_file(str(temp_wav), STEPFUN_API_KEY))
-                if text and text.strip():
-                    user_input = text.strip()
-                else:
-                    st.warning("未识别到有效内容，请重试。")
-            except Exception as e:
-                st.error(f"语音识别失败: {e}")
-            finally:
+    # --- 对话统计 ---
+    st.markdown(f"当前对话：**{_msg_count}** 条消息（候选人 {_user_count} 轮，面试官 {_asst_count} 轮）")
+    st.markdown("---")
+
+    # --- 下载对话记录 ---
+    st.subheader("下载对话记录")
+    if not _history:
+        st.info("暂无对话记录，开始面试后即可下载。")
+    else:
+        dl_col1, dl_col2 = st.columns(2)
+
+        # JSON 格式下载
+        with dl_col1:
+            history_json = json.dumps(
+                _history, ensure_ascii=False, indent=2
+            )
+            st.download_button(
+                label="📥 下载 JSON",
+                data=history_json,
+                file_name=f"interview_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                use_container_width=True,
+            )
+
+        # TXT 格式下载（可读的对话记录）
+        with dl_col2:
+            history_txt = _format_history_for_report(_history)
+            st.download_button(
+                label="📥 下载 TXT",
+                data=history_txt,
+                file_name=f"interview_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain",
+                use_container_width=True,
+            )
+
+    st.markdown("---")
+
+    # --- AI 面试评价报告 ---
+    st.subheader("AI 面试评价报告")
+
+    if not _history:
+        st.info("暂无对话记录，面试结束后可生成 AI 评价报告。")
+    else:
+        if st.button("🤖 生成 AI 面试评价报告", use_container_width=True, type="primary"):
+            st.session_state.report_generating = True
+            st.session_state.ai_report_text = ""
+
+        # 流式生成报告
+        if st.session_state.report_generating:
+            report_placeholder = st.empty()
+            with st.spinner("Qwen-max 正在深度分析面试表现，请稍候（约 15~30 秒）..."):
                 try:
-                    temp_wav.unlink(missing_ok=True)
-                except Exception:
-                    pass
-else:
-    st.session_state.audio_processed_token = None
+                    for partial_report in ai_report_stream(_history):
+                        st.session_state.ai_report_text = partial_report
+                        report_placeholder.markdown(partial_report)
+                except Exception as e:
+                    st.error(f"报告生成失败: {e}")
+            st.session_state.report_generating = False
+            st.rerun()
 
-# 处理本轮用户输入：流式 LLM + 更新 history + 可选 TTS
+        # 展示已生成的报告
+        if st.session_state.ai_report_text and not st.session_state.report_generating:
+            st.markdown(st.session_state.ai_report_text)
+
+            st.markdown("---")
+            # 下载报告
+            rpt_col1, rpt_col2 = st.columns(2)
+            with rpt_col1:
+                st.download_button(
+                    label="📥 下载报告（Markdown）",
+                    data=st.session_state.ai_report_text,
+                    file_name=f"interview_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                    mime="text/markdown",
+                    use_container_width=True,
+                )
+            with rpt_col2:
+                # 合并：对话记录 + 报告，一份完整文件
+                full_export = (
+                    "=" * 60 + "\n"
+                    "面试对话记录\n"
+                    + "=" * 60 + "\n\n"
+                    + _format_history_for_report(_history)
+                    + "\n\n"
+                    + "=" * 60 + "\n"
+                    "AI 面试评价报告\n"
+                    + "=" * 60 + "\n\n"
+                    + st.session_state.ai_report_text
+                )
+                st.download_button(
+                    label="📥 下载完整记录 + 报告",
+                    data=full_export,
+                    file_name=f"interview_full_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                    mime="text/plain",
+                    use_container_width=True,
+                )
+
+# -----------------------------------------------------------------------------
+# 6. 共享处理逻辑：LLM + RAG + TTS
+# -----------------------------------------------------------------------------
 if user_input:
     st.session_state.history.append({"role": "user", "content": user_input})
-    # 流式回复占位
     reply_placeholder = st.empty()
     full_response = ""
     with st.spinner("面试官正在思考..."):
@@ -387,15 +525,9 @@ if user_input:
                     retrieved = ""
 
                 if retrieved and retrieved.strip():
-                    with st.expander(
-                        f"检索到的相关知识（RAG · {st.session_state.rag_domain} · Top-{st.session_state.rag_top_k}）",
-                        expanded=False,
-                    ):
-                        st.markdown(retrieved.replace("\n", "  \n"))
                     augmented_system_prompt += (
                         "\n\n参考知识库内容（仅供回答参考）：\n" + retrieved
                     )
-                    # 存入 rag_history 以便在 RAG 知识检索 Tab 持久展示
                     st.session_state.rag_history.append({
                         "query": user_input,
                         "retrieved": retrieved,
@@ -421,13 +553,12 @@ if user_input:
             )
     st.session_state.history.append({"role": "assistant", "content": full_response})
 
-    # 可选 TTS：整段合成并播放，路径存入 session 以便 rerun 后仍可播放
+    # TTS：生成语音，语音 Tab 会自动播放
     if st.session_state.enable_tts and full_response and not full_response.startswith("抱歉"):
         with st.spinner("正在生成语音..."):
             tts = TTS_no_stream(STEPFUN_API_KEY)
             temp_mp3 = TEMP_DIR / f"{uuid4().hex}.mp3"
             if tts.to_speech(full_response, str(temp_mp3)):
-                # 新 TTS 前删除旧文件
                 old_tts = st.session_state.get("last_tts_path")
                 if old_tts and old_tts != str(temp_mp3) and Path(old_tts).exists():
                     try:
