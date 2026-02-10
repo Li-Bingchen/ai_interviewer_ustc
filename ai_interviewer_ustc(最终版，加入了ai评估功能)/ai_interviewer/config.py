@@ -10,7 +10,7 @@ from pathlib import Path
 STEPFUN_API_KEY = os.getenv("STEPFUN_API_KEY", "6pZ3jWJGHoMXAcZZpjF3ierYzYDqHEpQLU9gK6auHIWhB1uthsLfqUAnzGLcBiW5x")
 
 # 阿里云 DashScope API (用于 LLM)
-DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "sk-97cc56de88184ad1913987c3005a8c93")
+DASHSCOPE_API_KEY ="sk-af8e9af4aae340bd86178117f7f3f33c" #os.getenv("DASHSCOPE_API_KEY", "sk-af8e9af4aae340bd86178117f7f3f33c")
 
 # ==================== 路径配置 ====================
 # 项目根目录

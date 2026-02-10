@@ -1,0 +1,99 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# Conda
+.conda/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Streamlit
+.streamlit/
+
+# 临时文件
+temp/
+tmp/
+*.tmp
+*.log
+
+# 音频文件（临时生成的）
+*.wav
+*.mp3
+
+# 测试文件
+test_*.py
+*_test.py
+
+# 输出文件
+output/
+*.pdf
+*.docx
+
+# 环境变量
+.env
+.env.local
+
+# 数据库
+*.db
+*.sqlite
+*.sqlite3
+
+# 向量数据库（如果很大的话）
+# vector_db/
+
+# API 密钥（如果有单独的配置文件）
+secrets.toml
+api_keys.txt
+
+# 系统文件
+Thumbs.db
+desktop.ini
+
+# 备份文件
+*.bak
+*.backup
+*~
+
+# 编译文件
+*.pyc
+*.pyo
+

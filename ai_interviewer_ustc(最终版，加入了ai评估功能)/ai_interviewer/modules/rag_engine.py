@@ -1,7 +1,7 @@
 import os
 from typing import Dict, List, Optional
 from langchain_community.embeddings import DashScopeEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 
 from config import DASHSCOPE_API_KEY
 
@@ -42,7 +42,7 @@ def get_retrieved_context(
         return "\n".join(doc.page_content for doc in docs)
     except Exception as exc:  # 错误处理
         print(f"检索出错: {exc}")
-        return ""
+        raise  # 向调用方抛出，便于前端展示错误信息
 
 
 def build_vector_store(
