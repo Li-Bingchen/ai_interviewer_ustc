@@ -1,2 +1,0 @@
-pip install edge-tts pydub
-pip install gradio
